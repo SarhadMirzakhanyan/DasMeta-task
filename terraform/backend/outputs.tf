@@ -1,6 +1,6 @@
 output "backet_name" {
-    value = aws_s3_bucket.terraform_state_bucket.id
-  
+  value = aws_s3_bucket.terraform_state_bucket.id
+
 }
 
 output "dynamo_table_name" {
