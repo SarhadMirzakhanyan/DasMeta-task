@@ -1,0 +1,23 @@
+replicaCount: 2
+
+service:
+  type: LoadBalancer
+
+# Use initContainer to create a custom index.html file
+initContainers:
+  - name: init-nginx-html
+    image: busybox
+    command: ['sh', '-c', 'echo "<!DOCTYPE html><html><head><title>Welcome to NGINX!</title></head><body><h1>Hello, Terraform with Helm!</h1><p>This is a custom landing page for NGINX deployed with Terraform and Helm.</p></body></html>" > /usr/share/nginx/html/index.html']
+    volumeMounts:
+      - name: custom-html
+        mountPath: /usr/share/nginx/html
+
+# Volume where the index.html will be stored
+extraVolumes:
+  - name: custom-html
+    emptyDir: {}
+
+# Mount the volume to the NGINX container
+extraVolumeMounts:
+  - name: custom-html
+    mountPath: /usr/share/nginx/html

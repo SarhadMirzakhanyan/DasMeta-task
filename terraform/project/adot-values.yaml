@@ -1,0 +1,52 @@
+clusterName: ${local.cluster_name}
+region: ${local.region}
+
+service:
+  type: DaemonSet
+
+otelAgent:
+  enabled: true
+
+  configuration:
+    receivers:
+      otlp:
+        protocols:
+          grpc:
+          http:
+      container_insights:
+        collection_interval: 30s
+        cpu_metrics_enabled: true
+        memory_metrics_enabled: true
+        disk_metrics_enabled: true
+        network_metrics_enabled: true
+    processors:
+      batch:
+        timeout: 10s
+      resource:
+        attributes:
+          - key: cluster.name
+            value: ${local.cluster_name}
+          - key: region
+            value: ${local.aws_region}
+    exporters:
+      cloudwatch:
+        namespace: "EKS/ContainerInsights"
+        dimensions:
+          - ClusterName
+          - NodeName
+          - Namespace
+          - PodName
+        log_group_name: "/aws/containerinsights/${local.cluster_name}/performance"
+        log_stream_prefix: "metrics"
+      logging:
+        loglevel: debug
+    service:
+      pipelines:
+        metrics:
+          receivers: [container_insights]
+          processors: [batch, resource]
+          exporters: [cloudwatch]
+        logs:
+          receivers: [otlp]
+          processors: [batch, resource]
+          exporters: [cloudwatch]
