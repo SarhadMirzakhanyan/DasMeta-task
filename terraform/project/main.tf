@@ -1,49 +1,38 @@
-provider "aws" {
-  region = local.region
+module "adot" {
+  source = "makandra/adot/eks"
+  version = "1.0.4"
+
+  cert-manager = false
+  cluster_name = local.cluster_name
+  adot_version = "v0.92.1-eksbuild.1"
 }
 
-provider "kubernetes" {
-  host                   = module.eks_al2.cluster_endpoint
-  token                  = data.aws_eks_cluster_auth.cluster.token
-  cluster_ca_certificate = base64decode(module.eks_al2.cluster_certificate_authority_data)
+resource "helm_release" "adot-collector" {
+  name = "adot-collector"
+  repository       = "https://makandra.github.io/aws-otel-helm-charts/"
+  chart            = "adot-exporter-for-eks-on-ec2"
+  namespace        = "adot"
+  version          = "0.11.1"
+  create_namespace = false
+  atomic           = true
 
-  exec {
-      api_version = "client.authentication.k8s.io/v1beta1"
-      args        = [
-        "eks", "get-token", 
-        "--cluster-name", data.aws_eks_cluster.cluster.name, 
-        "--role-arn", "arn:aws:iam::314647557426:user/terraform-user" #add role-arn
-      ]
-      command     = "aws"
-  }
+  values = [
+    templatefile("./templates/adot-values.tpl", {
+      region       = local.region
+      cluster_name = local.cluster_name
+      # the namespace regex is used to exclude metrics of those namespaces from being sent to cloudwatch
+      drop_namespace_regex = "(amazon-cloudwatch|kube-system|adot|exampleapp.*|opentelemetry-operator-system)"
+      log_group_name       = local.adot_log_group_name
+    })
+  ]
 }
 
-provider "helm" {
-  kubernetes {
-    host                   = module.eks_al2.cluster_endpoint
-    token                  = data.aws_eks_cluster_auth.cluster.token
-    cluster_ca_certificate = base64decode(module.eks_al2.cluster_certificate_authority_data)
-  }
+resource "aws_cloudwatch_log_group" "adot" {
+  name              = local.adot_log_group_name
+  retention_in_days = var.log_rentention_days
+
 }
 
-resource "aws_eks_addon" "adot" {
-  depends_on = [ helm_release.cert_manager ]
-  cluster_name                = module.eks_al2.cluster_name
-  addon_name                  = "adot"
-  addon_version               = "v0.94.1-eksbuild.1" 
-  resolve_conflicts_on_update = "OVERWRITE"
-  service_account_role_arn = aws_iam_role.adot_role.arn
-}
-
-data "aws_eks_cluster" "cluster" {
-  depends_on = [ module.eks_al2 ]
-  name = module.eks_al2.cluster_name
-}
-
-data "aws_eks_cluster_auth" "cluster" {
-  depends_on = [ module.eks_al2 ]
-  name = module.eks_al2.cluster_name
-}
 
 resource "helm_release" "cert_manager" {
   name       = "cert-manager"

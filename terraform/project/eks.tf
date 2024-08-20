@@ -1,3 +1,31 @@
+resource "aws_security_group" "eks_sg" {
+    name        = "dasmeta eks cluster"
+    description = "Allow traffic"
+    vpc_id      = module.vpc.default_vpc_id
+
+    ingress {
+      description      = "World"
+      from_port        = 0
+      to_port          = 0
+      protocol         = "-1"
+      cidr_blocks      = ["0.0.0.0/0"]
+      ipv6_cidr_blocks = ["::/0"]
+    }
+
+    egress {
+      from_port        = 0
+      to_port          = 0
+      protocol         = "-1"
+      cidr_blocks      = ["0.0.0.0/0"]
+      ipv6_cidr_blocks = ["::/0"]
+    }
+
+    tags = {
+      Name = "EKS alb sg",
+      "kubernetes.io/cluster/${local.cluster_name}": "owned"
+    }
+  }
+
 module "eks_al2" {
   source  = "terraform-aws-modules/eks/aws"
   version = "~> 20.0"
@@ -15,6 +43,7 @@ module "eks_al2" {
   subnet_ids = module.vpc.private_subnets
   cluster_endpoint_public_access = true
   enable_cluster_creator_admin_permissions = true
+  cluster_additional_security_group_ids = [aws_security_group.eks_sg.id]
 
   eks_managed_node_groups = {
     worker_ng = {
@@ -42,6 +71,6 @@ resource "helm_release" "nginx" {
   namespace = "default"
 
   values = [
-    file("nginx-values.yaml")
+    file("templates/nginx-values.yaml")
   ]
 }

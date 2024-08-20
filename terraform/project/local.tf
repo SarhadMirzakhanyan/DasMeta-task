@@ -11,4 +11,5 @@ locals {
   }
 
   cluster_name = "dasmeta-cluster"
+  adot_log_group_name = "adot-logs"
 }
