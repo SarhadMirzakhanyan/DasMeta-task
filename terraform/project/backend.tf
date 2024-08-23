@@ -6,4 +6,14 @@ terraform {
     key            = "project/terraform.tfstate"
     region         = "us-east-1"
   }
+  required_providers {
+    kubectl = {
+      source  = "gavinbunney/kubectl"
+      version = ">= 1.7.0"
+    }
+    kubernetes = {
+      source  = "hashicorp/kubernetes"
+      version = "~> 2.23"
+    }
+  }
 }

@@ -9,8 +9,8 @@ variable "adot_collector_policy_arns" {
 }
 
 variable "log_rentention_days" {
-    description = "number of days to keep the logs"
-    type = number
-    default = 7
+  description = "number of days to keep the logs"
+  type        = number
+  default     = 7
 }
 

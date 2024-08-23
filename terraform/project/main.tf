@@ -1,5 +1,5 @@
 module "adot" {
-  source = "makandra/adot/eks"
+  source  = "makandra/adot/eks"
   version = "1.0.4"
 
   cert-manager = false
@@ -8,7 +8,7 @@ module "adot" {
 }
 
 resource "helm_release" "adot-collector" {
-  name = "adot-collector"
+  name             = "adot-collector"
   repository       = "https://makandra.github.io/aws-otel-helm-charts/"
   chart            = "adot-exporter-for-eks-on-ec2"
   namespace        = "adot"
@@ -40,7 +40,7 @@ resource "helm_release" "cert_manager" {
   chart      = "cert-manager"
   version    = "v1.15.1"
 
-  namespace  = "cert-manager"
+  namespace        = "cert-manager"
   create_namespace = true
 
   set {

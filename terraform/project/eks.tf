@@ -1,30 +1,30 @@
 resource "aws_security_group" "eks_sg" {
-    name        = "dasmeta eks cluster"
-    description = "Allow traffic"
-    vpc_id      = module.vpc.default_vpc_id
+  name        = "dasmeta eks cluster"
+  description = "Allow traffic"
+  vpc_id      = "vpc-0ef6c9baa736fa966"
 
-    ingress {
-      description      = "World"
-      from_port        = 0
-      to_port          = 0
-      protocol         = "-1"
-      cidr_blocks      = ["0.0.0.0/0"]
-      ipv6_cidr_blocks = ["::/0"]
-    }
-
-    egress {
-      from_port        = 0
-      to_port          = 0
-      protocol         = "-1"
-      cidr_blocks      = ["0.0.0.0/0"]
-      ipv6_cidr_blocks = ["::/0"]
-    }
-
-    tags = {
-      Name = "EKS alb sg",
-      "kubernetes.io/cluster/${local.cluster_name}": "owned"
-    }
+  ingress {
+    description      = "World"
+    from_port        = 0
+    to_port          = 0
+    protocol         = "-1"
+    cidr_blocks      = ["0.0.0.0/0"]
+    ipv6_cidr_blocks = ["::/0"]
   }
+
+  egress {
+    from_port        = 0
+    to_port          = 0
+    protocol         = "-1"
+    cidr_blocks      = ["0.0.0.0/0"]
+    ipv6_cidr_blocks = ["::/0"]
+  }
+
+  tags = {
+    Name = "EKS alb sg",
+    "kubernetes.io/cluster/${local.cluster_name}" : "owned"
+  }
+}
 
 module "eks_al2" {
   source  = "terraform-aws-modules/eks/aws"
@@ -39,19 +39,19 @@ module "eks_al2" {
     vpc-cni                = {}
   }
 
-  vpc_id     = module.vpc.vpc_id
-  subnet_ids = module.vpc.private_subnets
-  cluster_endpoint_public_access = true
+  vpc_id                                   = module.vpc.vpc_id
+  subnet_ids                               = module.vpc.private_subnets
+  cluster_endpoint_public_access           = true
   enable_cluster_creator_admin_permissions = true
-  cluster_additional_security_group_ids = [aws_security_group.eks_sg.id]
+  cluster_additional_security_group_ids    = [aws_security_group.eks_sg.id]
 
   eks_managed_node_groups = {
     worker_ng = {
       ami_type       = "AL2_x86_64"
       instance_types = ["t3.medium"]
 
-      min_size = 2
-      max_size = 2
+      min_size     = 2
+      max_size     = 2
       desired_size = 2
 
       capacity_type = "SPOT"
